@@ -371,12 +371,22 @@ export default defineComponent({
                 .filter(s => !!s)
                 .sort((a, b) => a.Name.localeCompare(b.Name));
         },
+        /**
+         * Current CPU usage of the first matched container as a number 0-100.
+         * Used to size the compact CPU progress bar.
+         * @returns {number}
+         */
         cpuPercent() {
             if (this.statsInstances.length === 0) {
                 return 0;
             }
             return this.parsePercent(this.statsInstances[0].CPUPerc);
         },
+        /**
+         * Current memory usage of the first matched container as a number 0-100.
+         * Used to size the compact memory progress bar.
+         * @returns {number}
+         */
         memPercent() {
             if (this.statsInstances.length === 0) {
                 return 0;
@@ -416,6 +426,12 @@ export default defineComponent({
         restartService() {
             this.$emit("restart-service", this.name);
         },
+        /**
+         * Parse a percentage string from `docker stats` (e.g. "5.23%") into a
+         * number clamped to the 0-100 range. Returns 0 for unparseable input.
+         * @param {string} str Raw percent value from docker stats.
+         * @returns {number}
+         */
         parsePercent(str) {
             const n = parseFloat(str);
             if (isNaN(n)) {
@@ -423,6 +439,12 @@ export default defineComponent({
             }
             return Math.min(100, Math.max(0, n));
         },
+        /**
+         * Map a usage percentage to a Bootstrap background utility class so the
+         * progress bar shifts from primary -> warning -> danger as load rises.
+         * @param {number} pct Usage as a 0-100 number.
+         * @returns {string} Bootstrap class name.
+         */
         barVariant(pct) {
             if (pct < 60) {
                 return "bg-primary";
