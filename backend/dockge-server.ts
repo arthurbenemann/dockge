@@ -651,10 +651,16 @@ export class DockgeServer {
 
             let lines = res.stdout?.toString().split("\n");
 
+            const addEntry = (obj : { Name : string }) => stats.set(obj.Name, obj);
+
             for (let line of lines) {
                 try {
                     let obj = JSON.parse(line);
-                    stats.set(obj.Name, obj);
+                    if (obj instanceof Array) {
+                        obj.forEach(addEntry);
+                    } else {
+                        addEntry(obj);
+                    }
                 } catch (e) {
                 }
             }
