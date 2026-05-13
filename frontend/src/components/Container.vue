@@ -67,14 +67,40 @@
         <div v-else-if="statsInstances.length > 0" class="mt-2">
             <div class="d-flex align-items-center gap-3">
                 <template v-if="!expandedStats">
-                    <div class="stats">
-                        {{ $t('CPU') }}: {{ statsInstances[0].CPUPerc }}
-                    </div>
-                    <div class="stats">
-                        {{ $t('memoryAbbreviated') }}: {{ statsInstances[0].MemUsage }}
+                    <div class="stats-compact flex-grow-1">
+                        <div class="stat-row">
+                            <span class="stat-label">{{ $t('CPU') }}</span>
+                            <div class="progress flex-grow-1">
+                                <div
+                                    class="progress-bar"
+                                    :class="barVariant(cpuPercent)"
+                                    role="progressbar"
+                                    :style="{ width: cpuPercent + '%' }"
+                                    :aria-valuenow="cpuPercent"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                ></div>
+                            </div>
+                            <span class="stat-value">{{ statsInstances[0].CPUPerc }}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">{{ $t('memoryAbbreviated') }}</span>
+                            <div class="progress flex-grow-1">
+                                <div
+                                    class="progress-bar"
+                                    :class="barVariant(memPercent)"
+                                    role="progressbar"
+                                    :style="{ width: memPercent + '%' }"
+                                    :aria-valuenow="memPercent"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                ></div>
+                            </div>
+                            <span class="stat-value">{{ statsInstances[0].MemUsage }}</span>
+                        </div>
                     </div>
                 </template>
-                <div class="d-flex flex-grow-1 justify-content-end">
+                <div class="d-flex ms-auto flex-shrink-0">
                     <button class="btn btn-sm btn-normal" @click="expandedStats = !expandedStats">
                         <font-awesome-icon :icon="expandedStats ? 'chevron-up' : 'chevron-down'" />
                     </button>
@@ -345,6 +371,18 @@ export default defineComponent({
                 .filter(s => !!s)
                 .sort((a, b) => a.Name.localeCompare(b.Name));
         },
+        cpuPercent() {
+            if (this.statsInstances.length === 0) {
+                return 0;
+            }
+            return this.parsePercent(this.statsInstances[0].CPUPerc);
+        },
+        memPercent() {
+            if (this.statsInstances.length === 0) {
+                return 0;
+            }
+            return this.parsePercent(this.statsInstances[0].MemPerc);
+        },
         status() {
             if (!this.serviceStatus) {
                 return "N/A";
@@ -377,6 +415,22 @@ export default defineComponent({
         },
         restartService() {
             this.$emit("restart-service", this.name);
+        },
+        parsePercent(str) {
+            const n = parseFloat(str);
+            if (isNaN(n)) {
+                return 0;
+            }
+            return Math.min(100, Math.max(0, n));
+        },
+        barVariant(pct) {
+            if (pct < 60) {
+                return "bg-primary";
+            } else if (pct < 85) {
+                return "bg-warning";
+            } else {
+                return "bg-danger";
+            }
         }
 
     }
@@ -404,9 +458,38 @@ export default defineComponent({
         justify-content: end;
     }
 
-    .stats {
-        font-size: 0.8rem;
-        color: #6c757d;
+    .stats-compact {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .stat-label {
+            min-width: 32px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            min-width: 130px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress {
+            height: 6px;
+        }
+
+        .progress-bar {
+            transition: width 0.4s ease;
+        }
     }
 }
 </style>
